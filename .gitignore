@@ -1,0 +1,41 @@
+# --- 1. The Data (Your current rules) ---
+mald1/
+mald_1.1/
+data/
+*.zip
+*.tar.gz
+*.tgz
+
+# --- 2. The Dangerous Stuff (Model Weights) ---
+# If you accidentally commit a 15GB .safetensors file, Git will break.
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.h5
+*.gguf
+
+# --- 3. Large Data Files (Just in case they aren't in mald1/) ---
+*.rda
+*.rdata
+*.csv
+*.tsv
+*.parquet
+*.pkl
+*.npy
+
+# --- 4. Python & Environment (Standard) ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+qwen_env/
+.env
+
+# --- 5. NCSA Delta / Slurm Logs ---
+# You don't want hundreds of "job_12345.out" files cluttering your repo
+*.out
+*.err
+*.log
+slurm-*
