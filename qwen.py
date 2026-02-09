@@ -1,17 +1,32 @@
 import os
-from io import BytesIO
-import librosa
-from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 import torch
 from loader import load, audio_generator
-# import io
+import transformers
+from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 
+# 1. Force logging
+transformers.utils.logging.set_verbosity_info()
+
+print("--- Step 1: Loading Processor ---")
 processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct")
-model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct", device_map="auto")
+
+print("--- Step 2: Loading Model (This may take 2-5 mins on NFS) ---")
+model = Qwen2AudioForConditionalGeneration.from_pretrained(
+    "Qwen/Qwen2-Audio-7B-Instruct", 
+    device_map="auto",              # Checks for your NCSA GPUs
+    torch_dtype=torch.float16,      # Essential for memory/speed
+    low_cpu_mem_usage=True          # Prevents NFS stalls
+)
+
+print(f"--- Step 3: Model Loaded on device: {model.device} ---")
+
+# processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct")
+# model = Qwen2AudioForConditionalGeneration.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct", device_map="auto")
 
 audios = load('mald1/MALD1_pw/')
+subset_audios = audios[:10]
 
-for i, (audio, file_name) in audio_generator(audios, processor=processor):
+for i, (audio, file_name) in audio_generator(subset_audios, processor=processor):
     conversation = [
         {'role': 'system', 'content': 'You are a helpful assistant.'}, 
         {"role": "user", "content": [
