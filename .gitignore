@@ -5,6 +5,7 @@ data/
 *.zip
 *.tar.gz
 *.tgz
+*.sh
 
 # --- 2. The Dangerous Stuff (Model Weights) ---
 # If you accidentally commit a 15GB .safetensors file, Git will break.
