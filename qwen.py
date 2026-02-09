@@ -50,3 +50,4 @@ for i, (audio, file_name) in audio_generator(subset_audios, processor=processor)
     generate_ids = generate_ids[:, inputs.input_ids.size(1):]
     response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
     print(f"response: {response}")
+    
