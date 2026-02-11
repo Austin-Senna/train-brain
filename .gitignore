@@ -32,6 +32,7 @@ __pycache__/
 .venv/
 venv/
 qwen_env/
+tts_env/
 .env
 
 # --- 5. NCSA Delta / Slurm Logs ---
