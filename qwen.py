@@ -1,50 +1,84 @@
 import os
 import torch
+import logging
+import sys
 from loader import load, audio_generator
 import transformers
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 
-# 1. Force logging
-transformers.utils.logging.set_verbosity_info()
+output_folder = "output_features_01/rw"
+audio_folder = 'mald1/MALD1_rw/'
+output_run_log = "01_rw"
 
-print("--- Step 1: Loading Processor ---")
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.FileHandler(f"{output_run_log}_extraction_run.log"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# 2. MODEL LOADING
+logger.info("--- Step 1: Loading Processor ---")
 processor = AutoProcessor.from_pretrained("Qwen/Qwen2-Audio-7B-Instruct")
 
-print("--- Step 2: Loading Model (This may take 2-5 mins on NFS) ---")
+logger.info("--- Step 2: Loading Model (This may take 2-5 mins on NFS) ---")
 model = Qwen2AudioForConditionalGeneration.from_pretrained(
     "Qwen/Qwen2-Audio-7B-Instruct", 
-    device_map="auto",              # Checks for your NCSA GPUs
-    torch_dtype=torch.float16,      # Essential for memory/speed
-    low_cpu_mem_usage=True          # Prevents NFS stalls
+    device_map="auto",
+    torch_dtype=torch.float16,
+    low_cpu_mem_usage=True
 )
+logger.info(f"--- Step 3: Model Loaded on device {model.device} ---")
 
-print(f"--- Step 3: Model Loaded on device. ---")
-audios = load('mald1/MALD1_pw/')
-subset_audios = audios[:100]
+# 3. DATA LOADING
+audios = load(audio_folder)
+logger.info(f"Found {len(audios)} files to process.")
 
-for i, (audio, file_name) in enumerate(audio_generator(subset_audios, processor=processor)):
-    conversation = [
-        {'role': 'system', 'content': 'You are a helpful assistant.'}, 
-        {"role": "user", "content": [
-            {"type": "audio", "audio_url": file_name},
-            {"type": "text", "text": "Transcribe the audio."},
-        ]}
-    ]
-    
-    text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
-    inputs = processor(text=text, audio=audio, return_tensors="pt", padding=True, sampling_rate=processor.feature_extractor.sampling_rate) 
-    inputs = inputs.to(model.device)
-    
-    with torch.no_grad():
-        outputs = model(**inputs, output_hidden_states=True)
-    penultimate_embeddings = outputs.hidden_states[-2]
-    save_name = os.path.basename(file_name).replace('.wav', '.pt')
-    os.makedirs(f"{os.getcwd()}/output_features", exist_ok=True)
-    torch.save(penultimate_embeddings.cpu(), f"output_features/{save_name}")
-    print(f"Processed: {save_name} | Features Extracted.")
+os.makedirs(output_folder, exist_ok=True)
 
-    generate_ids = model.generate(**inputs, max_new_tokens=512)
-    generate_ids = generate_ids[:, inputs.input_ids.size(1):]
-    response = processor.batch_decode(generate_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
-    print(f"response: {response}")
-    
+# 4. EXTRACTION LOOP
+for i, (audio, file_name) in enumerate(audio_generator(audios, processor=processor)):
+    try:
+        # Prepare Inputs
+        conversation = [
+            {'role': 'system', 'content': ''}, 
+            {"role": "user", "content": [
+                {"type": "audio", "audio_url": file_name},
+                {"type": "text", "text": 'Output the transcription of the audio only.'}, 
+            ]}
+        ]
+        
+        text = processor.apply_chat_template(conversation, add_generation_prompt=True, tokenize=False)
+        inputs = processor(
+            text=text, 
+            audio=audio, 
+            return_tensors="pt", 
+            padding=True, 
+            sampling_rate=processor.feature_extractor.sampling_rate
+        ).to(model.device)
+        
+        # Forward Pass (Extract Features)
+        with torch.no_grad():
+            outputs = model(**inputs, output_hidden_states=True)
+            
+        penultimate_embeddings = outputs.hidden_states[-2]
+        
+        # Save
+        save_name = os.path.basename(file_name).replace('.wav', '.pt')
+        save_path = os.path.join(output_folder, save_name)
+        torch.save(penultimate_embeddings.cpu(), save_path)
+        
+        logger.info(f"[{i}/{len(audios)}] Processed: {save_name}")
+
+        # Generation (Optional - slow!)
+        generate_ids = model.generate(**inputs, max_new_tokens=512)
+        response = processor.batch_decode(generate_ids, skip_special_tokens=True)[0]
+        logger.info(f"Response: {response}")
+
+    except Exception as e:
+        logger.error(f"Failed to process file {file_name}: {e}")
+        continue # Skip to next file so the job doesn't die

@@ -4,9 +4,9 @@ from io import BytesIO
 import librosa
 
 def load(path):
-    cwd = os.getcwd()
-    path = os.path.join(cwd, path)
-    list_files = glob.glob(f'{path}/*')
+    path = os.path.join("/projects/bgbh/datasets", path)
+    list_files = glob.glob(f'{path}/*.wav')
+    list_files.sort()
 
     if not list_files:
         print(f"Warning: No files found in {path}")
