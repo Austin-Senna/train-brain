@@ -6,9 +6,11 @@ from loader import load, audio_generator
 import transformers
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 
-output_folder = "output_features_01/pw"
-audio_folder = 'mald1/MALD1_pw/'
-output_run_log = "01_pw"
+output_folder = "output_features_02/rw"
+audio_folder = 'mald1/MALD1_rw/'
+output_run_log = "02_rw"
+# prompt = "Output the transcription of the audio only."
+prompt = "Listen to the following word. Is it a real English word or a pseudoword? Answer with 'Real' or 'Pseudo'."
 
 logging.basicConfig(
     level=logging.INFO,
@@ -55,7 +57,7 @@ for i, (audio, file_name) in enumerate(audio_generator(audios, processor=process
             {'role': 'system', 'content': ''}, 
             {"role": "user", "content": [
                 {"type": "audio", "audio_url": file_name},
-                {"type": "text", "text": 'Output the transcription of the audio only.'}, 
+                {"type": "text", "text": prompt}, 
             ]}
         ]
         
