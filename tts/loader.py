@@ -20,7 +20,7 @@ def load_json(path):
     return good + bad
    
 def generate_voice(n):
-    maps = ["Ryan", "Aiden", "Sohee", "Vivian"]
+    maps = ["Ryan", "Aiden", "Sohee", "Ono_Anna"]
     results = []
     for i in range(n):
         results.append(maps[i%4])

@@ -3,12 +3,13 @@ import soundfile as sf
 from qwen_tts import Qwen3TTSModel
 import os 
 
-prompt = "Kevin Wu, you're so hot"
+prompt = "Kevin Wu you're so hot."
 model = Qwen3TTSModel.from_pretrained(
     "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
     device_map="cuda:0",
     dtype=torch.bfloat16,
-    attn_implementation="flash_attention_2",
+    # attn_implementation="flash_attention_2",
+    attn_implementation="sdpa",
 )
 
 ref_audio = "speaker.wav"
@@ -20,4 +21,4 @@ wavs, sr = model.generate_voice_clone(
     ref_audio=ref_audio,
     ref_text=ref_text,
 )
-sf.write(f"{os.getcwd()}/output_voice_clone.wav", wavs[0], sr)
+sf.write(f"{os.getcwd()}/austin_clone.wav", wavs[0], sr)

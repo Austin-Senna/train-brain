@@ -41,3 +41,5 @@ tts_env/
 *.err
 *.log
 slurm-*
+
+*.wav
