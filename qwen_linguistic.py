@@ -6,11 +6,35 @@ from loader import load, audio_generator
 import transformers
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 
-output_folder = "output_features_02/rw"
-audio_folder = 'mald1/MALD1_rw/'
-output_run_log = "02_rw"
-# prompt = "Output the transcription of the audio only."
-prompt = "Listen to the following word. Is it a real English word or a pseudoword? Answer with 'Real' or 'Pseudo'."
+# CHANGE MODE HERE:
+EVALUATION_TYPE = "02"
+RUN_TYPE = "syntax"
+
+PROMPTS = {"lexicon": 
+           {
+               "01": "Output the transcription of the audio only.", 
+               "02": "Listen to the following word. Is it a real English word or a pseudoword? Answer with 'Real' or 'Pseudo'."
+            },
+           "syntax": {
+               "01": "Output the transcription of the audio only.", 
+               "02": "Listen to the following sentence. Is it grammatically correct or ungrammatical? Answer with 'Correct' or 'Incorrect'."
+           },
+           "semantics": {
+               "01": "Output the transcription of the audio only.", 
+               "02": "Listen to the following sentence. Does it make logical sense, or is it semantically anomalous? Answer with 'Logical' or 'Nonsense'."
+           }
+           }
+
+AUDIO_FOLDERS = {"lexicon": "mald1",
+                 "syntax": "BLIMP_KOKORO",
+                 "semantics": ""
+                 }
+
+# CHANGE MANUALLY HERE:
+output_folder = f"output_features_{EVALUATION_TYPE}/{RUN_TYPE}"
+audio_folder = AUDIO_FOLDERS[RUN_TYPE]
+output_run_log = f"{EVALUATION_TYPE}_{RUN_TYPE}"
+prompt = PROMPTS[RUN_TYPE][str(EVALUATION_TYPE)]
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,7 +70,6 @@ for f in audios:
 audios = audios_to_run
 
 logger.info(f"Found {len(audios)} files to process.")
-
 os.makedirs(output_folder, exist_ok=True)
 
 # 4. EXTRACTION LOOP
@@ -90,4 +113,4 @@ for i, (audio, file_name) in enumerate(audio_generator(audios, processor=process
 
     except Exception as e:
         logger.error(f"Failed to process file {file_name}: {e}")
-        continue # Skip to next file so the job doesn't die
+        continue 

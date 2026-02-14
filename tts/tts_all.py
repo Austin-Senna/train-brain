@@ -1,3 +1,4 @@
+# DONT USE THIS. SLOW AND HEAVILY ACCENTED
 from loader import find_json, load_json, generate_voice
 import torch
 import soundfile as sf
@@ -24,7 +25,7 @@ for i, file in enumerate(files):
         continue
     
     all_texts = [item['audio'] for item in items]
-    all_speakers = generate_voice(n)
+    all_speakers = generate_voice(n, "QWEN")
     all_filenames = [item['name'] for item in items] # Assuming 'name' exists
 
     # Process in chunks (Batches)
@@ -71,22 +72,4 @@ for i, file in enumerate(files):
         
     del wavs
     torch.cuda.empty_cache()
-    # wavs, sr = model.generate_custom_voice(
-    #     text=[item['audio'] for item in items],
-    #     language=["English"] * n,
-    #     speaker=generate_voice(n),
-    #     instruct=[""] * n
-    # )
-
-    # for item, wav in zip(items, wavs):
-    #     filename = item['name']
-    #     output_folder = os.path.join(os.getcwd(), output_prefix, os.path.basename(file))
-    #     os.makedirs(output_folder, exist_ok=True)
-    #     save_path = os.path.join(output_folder,"{filename}.wav")
-        
-    #     if hasattr(wav, 'cpu'):
-    #         wav = wav.cpu().numpy()
-            
-    #     sf.write(save_path, wav, sr)
-
-
+ 

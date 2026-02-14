@@ -5,7 +5,7 @@ import librosa
 
 def load(path):
     path = os.path.join("/projects/bgbh/datasets", path)
-    list_files = glob.glob(f'{path}/*.wav')
+    list_files = glob.glob(f'{path}/**/*.wav', recursive=True)
     list_files.sort()
 
     if not list_files:
