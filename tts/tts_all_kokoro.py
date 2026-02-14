@@ -1,17 +1,17 @@
-from loader import find_json, load_json, generate_voice
+from loader import find_json, load, generate_voice
 from kokoro import KPipeline
 import soundfile as sf
 import torch
 import os 
 
-TYPE = "SEMANTIC"
+TYPE = "SYNTAX"
 output_prefix = "BLIMP_KOKORO"
 pipeline = KPipeline(lang_code='a')
 files = find_json('blimp')
 
 for file in files:
     print(f"Processing: {file}")
-    items = load_json(file, TYPE)
+    items = load(file, TYPE)
     n = len(items)
 
     if n == 0:

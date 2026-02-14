@@ -7,8 +7,9 @@ import transformers
 from transformers import AutoProcessor, Qwen2AudioForConditionalGeneration
 
 # CHANGE MODE HERE:
-EVALUATION_TYPE = "02"
-RUN_TYPE = "syntax"
+EVALUATION_TYPE = "02" #01/02
+RUN_TYPE = "syntax" #lexicon/syntax/semantics
+FOLDER_MODE = "CREATE" # CREATE -> creates subfolder based on name, #LET -> default
 
 PROMPTS = {"lexicon": 
            {
@@ -64,7 +65,16 @@ logger.info(f"--- Step 3: Model Loaded on device {model.device} ---")
 audios = load(audio_folder)
 audios_to_run = []
 for f in audios:
-    expected_output = os.path.join(output_folder, os.path.basename(f).replace('.wav', '.pt'))
+    expected_output = ""
+    base_name = os.path.basename(f)
+    
+    if FOLDER_MODE == "CREATE":
+        name_without_ext = base_name.replace('.wav', '')
+        subfolder, index, verdict = name_without_ext.rsplit('_', 2) # <-- NEW
+        expected_output = os.path.join(output_folder, subfolder, verdict, f"{name_without_ext}.pt")
+    else:
+        expected_output = os.path.join(output_folder, base_name.replace('.wav', '.pt'))
+        
     if not os.path.exists(expected_output):
         audios_to_run.append(f)
 audios = audios_to_run
@@ -98,13 +108,26 @@ for i, (audio, file_name) in enumerate(audio_generator(audios, processor=process
             outputs = model(**inputs, output_hidden_states=True)
             
         penultimate_embeddings = outputs.hidden_states[-2]
+
+        base_name = os.path.basename(file_name)
+        save_name = base_name.replace('.wav', '.pt')
+        save_folder = output_folder
         
-        # Save
-        save_name = os.path.basename(file_name).replace('.wav', '.pt')
-        save_path = os.path.join(output_folder, save_name)
-        torch.save(penultimate_embeddings.cpu(), save_path)
+        if FOLDER_MODE == "CREATE":
+            name_without_ext = base_name.replace('.wav', '')
+            # Splits from the right, ensuring prefixes with underscores stay whole
+            subfolder, index, verdict = name_without_ext.rsplit('_', 2) # <-- NEW
+            save_folder = os.path.join(output_folder, subfolder, verdict)
+            os.makedirs(save_folder, exist_ok=True)
+            
+        save_path = os.path.join(save_folder, save_name)
         
-        logger.info(f"[{i}/{len(audios)}] Processed: {save_name}")
+        # Free up memory explicitly before saving
+        embeddings_cpu = penultimate_embeddings.cpu()
+        del outputs, inputs, penultimate_embeddings
+        
+        torch.save(embeddings_cpu, save_path)
+        logger.info(f"[{i+1}/{len(audios)}] Processed: {save_name}")
 
         # Generation (Optional - slow!)
         # generate_ids = model.generate(**inputs, max_new_tokens=512)

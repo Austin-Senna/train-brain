@@ -6,15 +6,13 @@ def find_json(path):
     path = os.path.join(os.getcwd(), path)
     list_files = glob.glob(f'{path}/*.json?')
     list_files.sort()
-
     return list_files
-
 
 def load(path, type):
     if type == "SYNTAX":
-        load_json_syntax(path)
+        return load_json_syntax(path)
     elif type == "SEMANTIC":
-        load_json_semantic(path)
+        return load_json_semantic(path)
 
 def load_json_syntax(path):
     name = os.path.basename(path)

@@ -1,4 +1,6 @@
 # DONT USE THIS. SLOW AND HEAVILY ACCENTED
+# HAVENT UPDATED TO WORK
+
 from loader import find_json, load_json, generate_voice
 import torch
 import soundfile as sf
