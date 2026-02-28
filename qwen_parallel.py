@@ -29,7 +29,7 @@ PROMPTS = {"lexicon":
 
 AUDIO_FOLDERS = {"lexicon": "mald1",
                  "syntax": "BLIMP_KOKORO",
-                 "semantics": ""
+                 "semantics": "COMPS_KOKORO"
                  }
 
 # CHANGE MANUALLY HERE:

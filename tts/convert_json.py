@@ -1,48 +1,49 @@
-from loader import find_json
-import json 
-import os 
-OUTPUT_PREFIX = "comps_converted"
-files = find_json("comps")
+import json
+import os
 
-OUTPUT_FOLDER = os.path.join(os.getcwd(), OUTPUT_PREFIX)
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+# Define input and output paths
+input_file = "/projects/bgbh/awijaya/train-brain/tts/winogrande_1.1/train_l.jsonl"
+output_file = "winogrande_converted.jsonl"
 
-for file in files:
-    output_file = os.path.join(OUTPUT_FOLDER, os.path.basename(file))
+# Ensure the directory exists if you specify a folder path for the output
+os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
 
-    with open(file, 'r', encoding='utf-8') as infile, \
+with open(input_file, 'r', encoding='utf-8') as infile, \
      open(output_file, 'w', encoding='utf-8') as outfile:
     
-        for line in infile:
-            if not line.strip():
-                continue
-                
-            data = json.loads(line)
+    for line in infile:
+        if not line.strip():
+            continue
             
-            # 1. Construct the good and bad sentences
-            # Capitalize the first letter so it reads like a proper sentence
-            good_sent = f"{data['prefix_acceptable']} {data['property_phrase']}"
-            bad_sent = f"{data['prefix_unacceptable']} {data['property_phrase']}"
+        data = json.loads(line)
+        
+        sentence = data["sentence"]
+        opt1 = data["option1"]
+        opt2 = data["option2"]
+        ans = data["answer"]
+        
+        # 1. Determine which option is correct based on the "answer" key
+        if ans == "1":
+            good_word = opt1
+            bad_word = opt2
+        elif ans == "2":
+            good_word = opt2
+            bad_word = opt1
+        else:
+            # Fallback just in case there's unexpected data
+            continue
             
-            good_sent = good_sent[0].upper() + good_sent[1:]
-            bad_sent = bad_sent[0].upper() + bad_sent[1:]
+        # 2. Construct the good and bad sentences by replacing the blank '_'
+        good_sent = sentence.replace("_", good_word)
+        bad_sent = sentence.replace("_", bad_word)
 
-            # 2. Build the new dictionary matching your target format
-            new_data = {
-                "sentence_good": good_sent,
-                "sentence_bad": bad_sent,
-                # "field": "semantics", 
-                # "linguistics_term": "concept_property",
-                # "UID": data['negative_sample_type'], # Using your negative sample type here
-                # "simple_LM_method": True,
-                # "one_prefix_method": False,
-                # "two_prefix_method": False,
-                # "lexically_identical": False,
-                # "pairID": str(data['id']),
-                # "similarity": data['similarity'] # Keeping this just in case you need it
-            }
-            
-            # 3. Write the new JSON object to the output file
-            outfile.write(json.dumps(new_data) + '\n')
+        # 3. Build the new dictionary
+        new_data = {
+            "sentence_good": good_sent,
+            "sentence_bad": bad_sent,
+        }
+        
+        # 4. Write the new JSON object to the output file
+        outfile.write(json.dumps(new_data) + '\n')
 
-        print("Conversion complete!")
+print(f"Conversion complete! Output saved to {output_file}")

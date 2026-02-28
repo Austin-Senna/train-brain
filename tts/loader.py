@@ -9,10 +9,8 @@ def find_json(path):
     return list_files
 
 def load(path, type):
-    if type == "SYNTAX":
-        return load_json_syntax(path)
-    elif type == "SEMANTIC":
-        return load_json_semantic(path)
+    return load_json_syntax(path)
+
 
 def load_json_syntax(path):
     name = os.path.basename(path)
@@ -23,8 +21,6 @@ def load_json_syntax(path):
     bad =  [{'name': f"{name}_{i}_bad", "audio": b} for i, b in enumerate(bad)]
     return good + bad
 
-def load_json_semantic(path):
-    pass
 
 def generate_voice(n, type):
     maps = []

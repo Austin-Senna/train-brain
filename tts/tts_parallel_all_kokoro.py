@@ -9,7 +9,8 @@ from loader import find_json, load, generate_voice
 from kokoro import KPipeline
 
 TYPE = "SYNTAX"
-output_prefix = "BLIMP_KOKORO"
+output_prefix = "WINOGRANDE_KOKORO"
+input_folder = "winogrande_converted"
 
 # Global variable for worker processes so the model isn't reloaded constantly
 worker_pipeline = None
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     # Required for PyTorch multiprocessing (prevents CUDA context crashes if using a GPU)
     mp.set_start_method('spawn', force=True)
 
-    files = find_json('blimp')
+    files = find_json(input_folder)
     tasks = []
 
     print("Gathering tasks...")
@@ -64,7 +65,7 @@ if __name__ == '__main__':
         all_filenames = [item['name'] for item in items] 
 
         folder_name = os.path.basename(file).replace('.jsonl', '')
-        output_folder = os.path.join(os.getcwd(), output_prefix, folder_name)
+        output_folder = os.path.join('/projects/bgbh/datasets', output_prefix, folder_name)
         os.makedirs(output_folder, exist_ok=True)
 
         for i in range(n):
